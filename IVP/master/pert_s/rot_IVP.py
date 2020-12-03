@@ -62,6 +62,8 @@ problem.parameters['theta'] = theta
 problem.parameters['X'] = Ra/Pr
 problem.parameters['Y'] = (Pr*Pr*theta) / Ra
 problem.parameters['T'] = Ta**(1/2)
+problem.substitutions['s_total'] = 's + ( 1/(theta*m*rho_ref) ) * ( rho_ref*(1-theta)**(-m) - 1 )'
+problem.substitutions['s_total_z'] = 'sz - 1/(rho_ref*T_ref)'
 
 # Non-constant coeffiecents
 rho_ref = domain.new_field(name='rho_ref')
