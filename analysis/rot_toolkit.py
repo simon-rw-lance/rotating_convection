@@ -14,6 +14,8 @@ from scipy.signal import savgol_filter
 class SimData:
     def __init__(self, data_direc=None, save_direc=None, name=None, id='', making_figs=False):
 
+        self.test = "Yes"
+
         timestamp = datetime.datetime.now().strftime("%m-%dT%H-%M-%S")
 
         self.name = name
@@ -605,16 +607,12 @@ class SimData:
 
         print(f"E = {self.mean_E:.5f}")
 
-sim = "n0-5_t1e6"
-folder = "simon_ext/high_res"
-sim_id = sim
-#
-sim = "r14515"
-folder = "simon_ext/np-1/t1e5_EVP_check/new_17nov_check"
+sim = "r15700"
+folder = "../IVP/EVP-test/n1_t1e5/pert_s/"
 sim_id = sim
 
 direc = f"{folder}/{sim}/raw_data/"
-save  = f"{folder}/{sim}/figs/"
+save  = f"figs/{sim}/"
 data = SimData(direc, save, name=sim, id=sim_id, making_figs=True)
 data.ReadAnalysis()
 data.RuntimeCheck()
