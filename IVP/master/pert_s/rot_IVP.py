@@ -62,6 +62,8 @@ problem.parameters['theta'] = theta
 problem.parameters['X'] = Ra/Pr
 problem.parameters['Y'] = (Pr*Pr*theta) / Ra
 problem.parameters['T'] = Ta**(1/2)
+problem.substitutions['s_total'] = 's + ( 1/(theta*m*rho_ref) ) * ( rho_ref*(1-theta)**(-m) - 1 )'
+problem.substitutions['s_total_z'] = 'sz - 1/(rho_ref*T_ref)'
 
 # Non-constant coeffiecents
 rho_ref = domain.new_field(name='rho_ref')
@@ -105,7 +107,7 @@ problem.add_equation("  T_ref*( Pr*dt(s) - dy(dy(s)) - dz(sz) ) - Pr*w/rho_ref +
                         + 2*Y*( dy(v)*dy(v) + wz*wz + vz*dy(w) - (1/3)*(dy(v) + wz)*(dy(v) + wz) + (1/2)*(dy(u)*dy(u) + uz*uz + vz*vz + dy(w)*dy(w)) )")
 
 # Flux equations for use in analysis outputs
-problem.add_equation("  dz(L_buoy) = -s*rho_ref*w")
+problem.add_equation("  dz(L_buoy) = -s_total*rho_ref*w")
 problem.add_equation("  dz(L_diss) = -2*rho_ref*( dy(v)*dy(v) + wz*wz + vz*dy(w) - (1/3)*(dy(v) + wz)*(dy(v) + wz) + (1/2)*(dy(u)*dy(u) + uz*uz + vz*vz + dy(w)*dy(w)) )")
 
 problem.add_bc("left(w) = 0")            # Impermeable bottom boundary
@@ -169,7 +171,7 @@ snapshots.add_system(solver.state)
 
 # Analysis tasks
 analysis = solver.evaluator.add_file_handler(save_direc + 'analysis', sim_dt=rpf.analysis_freq, max_writes=5000)
-analysis.add_task("integ(s,'y')/Ly", layout='g', name='<s>_y')
+analysis.add_task("integ(s_total,'y')/Ly", layout='g', name='<s>_y')
 
 # Mean Reynolds number
 analysis.add_task("integ( integ( sqrt(u*u + v*v + w*w) , 'y')/Ly, 'z')/Lz", layout='g', name='Re')
@@ -200,8 +202,8 @@ else:
     analysis.add_task(" integ( sqrt( (dy(w) - vz)**2 + uz**2 + dy(u)**2 ) / T, 'y' ) / Ly", layout='g', name='Ro_layer')
 
 #Flux decomposition - Internal energy equation
-analysis.add_task("integ(rho_ref*T_ref*s*w,'y')*Pr/Ly", layout='g', name='L_conv')
-analysis.add_task("integ((-1)*rho_ref*T_ref*sz, 'y')/Ly", layout='g', name='L_cond')
+analysis.add_task("integ(rho_ref*T_ref*s_total*w,'y')*Pr/Ly", layout='g', name='L_conv')
+analysis.add_task("integ((-1)*rho_ref*T_ref*s_total_z, 'y')/Ly", layout='g', name='L_cond')
 analysis.add_task("integ(L_buoy - interp(L_buoy,z=0),'y')*(-Pr*theta)/Ly", layout='g', name='L_buoy')
 analysis.add_task("integ(L_diss - interp(L_diss,z=0),'y')*((Pr*Pr*theta)/Ra)/Ly", layout='g', name='L_diss')
 
@@ -211,7 +213,7 @@ analysis.add_task("integ( (-1)*rho_ref*( u*uz + v*( vz+dy(w) ) + (2/3)*w*( 2*wz 
 analysis.add_task("integ(p*w, 'y')*((Pr*Pr*theta)/Ra)/Ly", layout='g', name='L_p')
 
 #L_enth, the sum of L_conv and L_p
-analysis.add_task("(integ(rho_ref*w*T_ref*s, 'y')*Pr + \
+analysis.add_task("(integ(rho_ref*w*T_ref*s_total, 'y')*Pr + \
                    integ(p*w, 'y')*((Pr*Pr*theta)/Ra))/Ly", layout='g', name='L_enth')
 
 #Magnitude of viscous dissipation as calculated by equation 5 (E_def) and equation 24 (E_F_conv) - See C&B '17
