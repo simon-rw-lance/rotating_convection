@@ -100,6 +100,19 @@ class SimData:
             for var in tasks:
                 self.snap_tasks[var] = np.array(file['tasks'][var])
 
+        theta = 1-np.exp(-self.params['Np']/self.params['m'])
+        rho_ref = (1-theta*self.z)**(data.params['m'])
+        s_base = 1/(theta*self.params['m']) * ( (1-theta)**(-self.params['m']) - 1/rho_ref )
+        self.params['theta'] = theta
+        self.params['rho_ref'] = rho_ref
+        self.snap_tasks['s_base'] = s_base
+
+        s_tot = np.zeros_like(s)
+        for i in range(len(s[:,0,0])):
+            for j in range(len(s[0,:,0])):
+                s_tot[i,j,:] = self.snap_tasks[i,j,:] + s_base
+        self.snap_tasks['s_tot'] = s_tot
+
         self.snap_t = self.snap_scales['sim_time']
         self.snapshot_data_read = True
 
