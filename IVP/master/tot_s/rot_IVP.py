@@ -226,6 +226,36 @@ analysis.add_task(" integ( 2*rho_ref*( dy(v)*dy(v) + wz*wz + vz*dy(w) - (1/3)*(d
 # Mean KE
 analysis.add_task(" integ( (integ(0.5*(u*u + v*v + w*w)*rho_ref,'y')/Ly), 'z')/Lz", layout='g', name='KE')
 
+# Vertical momentum profiles
+analysis.add_task("integ( rho_ref*u, 'y')/Ly", layout='g', name='<x_mom>_y')
+analysis.add_task("integ( rho_ref*v, 'y')/Ly", layout='g', name='<y_mom>_y')
+analysis.add_task("integ( rho_ref*w, 'y')/Ly", layout='g', name='<z_mom>_y')
+
+# x-momentum
+analysis.add_task(" integ( integ( rho_ref*u, 'y')/Ly, 'z')/Lz", layout='g', name='<x_mom>')
+analysis.add_task(" integ( integ( rho_ref*( dy(dy(u)) + dz(uz) ), 'y')/Ly, 'z')/Lz",         layout='g', name='<x_mom>_visc1')
+analysis.add_task(" integ( integ( -rho_ref*T*( w*cos(Lat) + v*sin(Lat) ), 'y')/Ly, 'z')/Lz", layout='g', name='<x_mom>_rot')
+analysis.add_task(" integ( integ( dz_rho_ref*uz, 'y')/Ly, 'z')/Lz",                          layout='g', name='<x_mom>_visc2')
+analysis.add_task(" integ( integ( -rho_ref*( v*dy(u) + w*uz ), 'y')/Ly, 'z')/Lz",            layout='g', name='<x_mom>_advec')
+
+# y-momentum
+analysis.add_task(" integ( integ( rho_ref*v, 'y')/Ly, 'z')/Lz", layout='g', name='<y_mom>')
+analysis.add_task(" integ( integ( rho_ref*( (4/3)*dy(dy(v)) + dz(vz) + (1/3)*dy(vz) ), 'y')/Ly, 'z')/Lz", layout='g', name='<y_mom>_visc1')
+analysis.add_task(" integ( integ( -rho_ref*T*u*sin(Lat), 'y')/Ly, 'z')/Lz",                               layout='g', name='<y_mom>_rot')
+analysis.add_task(" integ( integ( -dy(p), 'y')/Ly, 'z')/Lz",                                              layout='g', name='<y_mom>_gradP')
+analysis.add_task(" integ( integ( dz_rho_ref*( vz + dy(w) ), 'y')/Ly, 'z')/Lz",                           layout='g', name='<y_mom>_visc2')
+analysis.add_task(" integ( integ( rho_ref*( v*dy(v) + w*vz ), 'y')/Ly, 'z')/Lz",                          layout='g', name='<y_mom>_advec')
+
+# z-momentum
+analysis.add_task(" integ( integ( rho_ref*w, 'y')/Ly, 'z')/Lz", layout='g', name='<z_mom>')
+analysis.add_task(" integ( integ( rho_ref*X*s, 'y')/Ly, 'z')/Lz",                                         layout='g', name='<z_mom>_buoy')
+analysis.add_task(" integ( integ( rho_ref*( dy(dy(w)) + (4/3)*dz(wz) + (1/3)*dy(vz) ), 'y')/Ly, 'z')/Lz", layout='g', name='<z_mom>_visc1')
+analysis.add_task(" integ( integ( rho_ref*T*u*cos(Lat), 'y')/Ly, 'z')/Lz",                                layout='g', name='<z_mom>_rot')
+analysis.add_task(" integ( integ( -dz(p), 'y')/Ly, 'z')/Lz",                                              layout='g', name='<z_mom>_gradP')
+analysis.add_task(" integ( integ( -theta*m*p/T_ref, 'y')/Ly, 'z')/Lz",                                    layout='g', name='<z_mom>_P2')
+analysis.add_task(" integ( integ( -(2/3)*theta*m*rho_ref/T_ref, 'y')/Ly, 'z')/Lz",                        layout='g', name='<z_mom>_visc2')
+analysis.add_task(" integ( integ( -rho_ref*( v*dy(w) + w*wz ), 'y')/Ly, 'z')/Lz",                         layout='g', name='<z_mom>_advec')
+
 # Creating a parameter file
 run_parameters = solver.evaluator.add_file_handler(save_direc + 'run_parameters', wall_dt=1e20, max_writes=1)
 run_parameters.add_task(Ly, name="Ly")
