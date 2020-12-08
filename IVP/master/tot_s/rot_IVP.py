@@ -143,7 +143,11 @@ noise = rand.standard_normal(gshape)[slices]
 # Linear background + perturbations damped at walls
 zb, zt = z_basis.interval
 pert =  1e-5 * noise * (zt - z) * (z - zb)
-s['g'] = pert
+
+rho_ref.set_scales(1)
+sb = 1/(theta*m) * ( (1-theta)**(-m) - 1/rho_ref['g'] )
+
+s['g'] = pert + sb
 s.differentiate('z', out=sz)
 
 # Initial timestep
