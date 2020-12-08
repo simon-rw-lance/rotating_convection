@@ -107,14 +107,15 @@ class SimData:
         self.params['rho_ref'] = rho_ref
         self.snap_tasks['s_base'] = s_base
 
-        s_tot = np.zeros_like(s)
-        for i in range(len(s[:,0,0])):
-            for j in range(len(s[0,:,0])):
-                s_tot[i,j,:] = self.snap_tasks[i,j,:] + s_base
+        s_tot = np.zeros_like(self.snap_tasks['s'])
+        for i in range(len(self.snap_tasks['s'][:,0,0])):
+            for j in range(len(self.snap_tasks['s'][0,:,0])):
+                s_tot[i,j,:] = self.snap_tasks['s'][i,j,:] + s_base
         self.snap_tasks['s_tot'] = s_tot
 
         self.snap_t = self.snap_scales['sim_time']
         self.snapshot_data_read = True
+
 
         print("### Snapshots Loaded ###")
 
