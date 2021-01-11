@@ -6,43 +6,13 @@ WARNING: This script may produce an extremely large output file.
 """
 
 import pathlib
+import sys
 from dedalus.tools import post
 
-# direc is the folder in which the various data folders are located
+direc = sys.argv[1]
+run_name = sys.argv[2]
 
-#-----#   #-----#   #-----#   #-----#   #-----#   #-----#   #-----#   #-----#   #-----#
-############################# These strings need editting #############################
-#-----#   #-----#   #-----#   #-----#   #-----#   #-----#   #-----#   #-----#   #-----#
-run_name = "s5_t1e5"
-direc_folder= f"../working_dir/sup-5/t1e5/raw_data/"
-#-----#   #-----#   #-----#   #-----#   #-----#   #-----#   #-----#   #-----#   #-----#
-#######################################################################################
-#-----#   #-----#   #-----#   #-----#   #-----#   #-----#   #-----#   #-----#   #-----#
-
-
-subfolder = "snapshots"
-direc = direc_folder + subfolder
-print(direc_folder)
-# name of the resulting output file
-output_name = f"{subfolder}_{run_name}"
-
-set_paths = list(pathlib.Path(direc).glob(subfolder + "_s*.h5"))
-post.merge_sets(direc + "/" + output_name + ".h5", set_paths, cleanup=True)
-
-# direc is the folder in which the various data folders are located
-subfolder = "analysis"
-direc = direc_folder + subfolder
-# name of the resulting output file
-output_name = f"{subfolder}_{run_name}"
-
-set_paths = list(pathlib.Path(direc).glob(subfolder + "_s*.h5"))
-post.merge_sets(direc + "/" + output_name + ".h5", set_paths, cleanup=True)
-
-# direc is the folder in which the various data folders are located
-subfolder = "run_parameters"
-direc = direc_folder + subfolder
-# name of the resulting output file
-output_name = f"{subfolder}_{run_name}"
-
-set_paths = list(pathlib.Path(direc).glob(subfolder + "_s*.h5"))
-post.merge_sets(direc + "/" + output_name + ".h5", set_paths, cleanup=True)
+for subfolder in ['snapshots', 'analysis', 'run_parameters']:
+    # print(f"Creating file {direc}{subfolder}/{subfolder}_{run_name}.h5")
+    set_paths = list(pathlib.Path(f"{direc}{subfolder}").glob(f"{subfolder}_s*.h5"))
+    post.merge_sets(f"{direc}{subfolder}/{subfolder}_{run_name}.h5", set_paths, cleanup=True)
