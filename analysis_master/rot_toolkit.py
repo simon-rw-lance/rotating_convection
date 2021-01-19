@@ -620,22 +620,22 @@ class SimData:
         plt.close()
 
         print(f"E = {self.mean_E:.5f}")
-
-sim = "r15700"
-folder = "../IVP/EVP-test/n1_t1e5/pert_s/"
-sim_id = sim
-
-direc = f"{folder}/{sim}/raw_data/"
-save  = f"figs/{sim}/"
-data = SimData(direc, save, name=sim, id=sim_id, making_figs=True)
-data.ReadAnalysis()
-data.RuntimeCheck()
-data.AvgIndex(9)
-data.PlotKE()
-data.FluxPlots()
-data.E_plots()
-data.ReadSnapshots()
-# data.PlotRo()s
-data.PlotSnapshots_xyz()
-
-data.SnapshotEvo(cadence=1)
+        
+# sim = "r15700"
+# folder = "../IVP/EVP-test/n1_t1e5/pert_s/"
+# sim_id = sim
+#
+# direc = f"{folder}/{sim}/raw_data/"
+# save  = f"figs/{sim}/"
+# data = SimData(direc, save, name=sim, id=sim_id, making_figs=True)
+# data.ReadAnalysis()
+# data.RuntimeCheck()
+# data.AvgIndex(9)
+# data.PlotKE()
+# data.FluxPlots()
+# data.E_plots()
+# data.ReadSnapshots()
+# # data.PlotRo()s
+# data.PlotSnapshots_xyz()
+#
+# data.SnapshotEvo(cadence=1)

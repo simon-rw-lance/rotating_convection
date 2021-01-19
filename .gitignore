@@ -2,3 +2,4 @@ analysis/figs
 working_dir
 **/raw_data
 **/__pycache__
+**/workshop.py
