@@ -467,14 +467,12 @@ class SimData:
         plt.clf()
         plt.close()
 
-    def FluxPlots(self):
+    def FluxTotal(self):
         '''
         Dependencies:
         - ReadAnalysis
         - AvgIndex
         '''
-
-        print("### Plotting fluxes ###")
 
         self.z = self.ana_scales['z']
 
@@ -496,6 +494,17 @@ class SimData:
         self.L_KE   = np.mean(self.L_KE_all[self.ASI:self.AEI],   axis=0)
         self.int_L_tot = self.L_cond + self.L_conv + self.L_buoy + self.L_diss
         self.tot_L_tot = self.L_cond + self.L_enth + self.L_visc + self.L_KE
+
+
+    def FluxPlots(self):
+        '''
+        Dependencies:
+        - ReadAnalysis
+        - AvgIndex
+        '''
+
+        self.FluxTotal()
+        print("### Plotting fluxes ###")
 
         plt.plot(self.L_cond, self.z, label=f"$L_{{cond}}$")
         plt.plot(self.L_conv, self.z, label=f"$L_{{conv}}$")
@@ -620,7 +629,7 @@ class SimData:
         plt.close()
 
         print(f"E = {self.mean_E:.5f}")
-        
+
 # sim = "r15700"
 # folder = "../IVP/EVP-test/n1_t1e5/pert_s/"
 # sim_id = sim
