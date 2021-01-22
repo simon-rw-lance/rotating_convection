@@ -481,6 +481,7 @@ class SimData:
         self.L_buoy_all = self.ana_tasks['L_buoy'][:,0,:]
         self.L_diss_all = self.ana_tasks['L_diss'][:,0,:]
 
+        self.L_p_all = self.ana_tasks['L_p'][:,0,:]
         self.L_enth_all = self.ana_tasks['L_enth'][:,0,:]
         self.L_visc_all = self.ana_tasks['L_visc'][:,0,:]
         self.L_KE_all = self.ana_tasks['L_KE'][:,0,:]
@@ -489,6 +490,7 @@ class SimData:
         self.L_conv = np.mean(self.L_conv_all[self.ASI:self.AEI], axis=0)
         self.L_buoy = np.mean(self.L_buoy_all[self.ASI:self.AEI], axis=0)
         self.L_diss = np.mean(self.L_diss_all[self.ASI:self.AEI], axis=0)
+        self.L_p    = np.mean(self.L_p_all[self.ASI:self.AEI],    axis=0)
         self.L_enth = np.mean(self.L_enth_all[self.ASI:self.AEI], axis=0)
         self.L_visc = np.mean(self.L_visc_all[self.ASI:self.AEI], axis=0)
         self.L_KE   = np.mean(self.L_KE_all[self.ASI:self.AEI],   axis=0)
