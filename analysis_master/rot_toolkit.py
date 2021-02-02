@@ -36,6 +36,7 @@ class SimData:
         with h5py.File(f"{self.data_direc}snapshots/snapshots{self.id}.h5", mode='r') as file:
             self.snap_t = np.array(file['scales']['sim_time'])
             self.snap_length = len(self.snap_t)
+            self.z = file['scales']['z']['1.0']
         with h5py.File(f"{self.data_direc}analysis/analysis{self.id}.h5", mode='r') as file:
             self.ana_t = np.array(file['scales']['sim_time'])
             self.ana_length = len(self.ana_t)
@@ -101,7 +102,7 @@ class SimData:
                 self.snap_tasks[var] = np.array(file['tasks'][var])
 
         theta = 1-np.exp(-self.params['Np']/self.params['m'])
-        rho_ref = (1-theta*self.z)**(data.params['m'])
+        rho_ref = (1-theta*self.z)**(self.params['m'])
         s_base = 1/(theta*self.params['m']) * ( (1-theta)**(-self.params['m']) - 1/rho_ref )
         self.params['theta'] = theta
         self.params['rho_ref'] = rho_ref
