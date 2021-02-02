@@ -47,7 +47,7 @@ domain = de.Domain([y_basis, z_basis], grid_dtype=np.float64)  # Defining our do
 z = domain.grid(1, scales=1)                                   # accessing the z values
 
 # 2D Anelastic hydrodynamics
-problem = de.IVP(domain, variables=['p', 's', 'u', 'v', 'w', 'sz', 'uz', 'vz', 'wz', 'L_buoy', 'L_diss'])
+problem = de.IVP(domain, variables=['p', 'S', 'u', 'v', 'w', 'Sz', 'uz', 'vz', 'wz', 'L_buoy', 'L_diss'])
 problem.meta['p','s','u','w']['z']['dirichlet'] = True
 
 # Defining model parameters
@@ -62,8 +62,8 @@ problem.parameters['theta'] = theta
 problem.parameters['X'] = Ra/Pr
 problem.parameters['Y'] = (Pr*Pr*theta) / Ra
 problem.parameters['T'] = Ta**(1/2)
-problem.substitutions['s_total'] = 's + ( 1/(theta*m*rho_ref) ) * ( rho_ref*(1-theta)**(-m) - 1 )'
-problem.substitutions['s_total_z'] = 'sz - 1/(rho_ref*T_ref)'
+problem.substitutions['s_total'] = 'S + ( 1/(theta*m*rho_ref) ) * ( rho_ref*(1-theta)**(-m) - 1 )'
+problem.substitutions['s_total_z'] = 'Sz - 1/(rho_ref*T_ref)'
 
 # Non-constant coeffiecents
 rho_ref = domain.new_field(name='rho_ref')
@@ -80,7 +80,7 @@ dz_rho_ref.meta['y']['constant'] = True
 problem.parameters['dz_rho_ref'] = dz_rho_ref   # z-derivative of rho_ref
 
 # Defining d/dz of s, u, and w for reducing our equations to first order
-problem.add_equation("sz - dz(s) = 0")
+problem.add_equation("Sz - dz(S) = 0")
 problem.add_equation("uz - dz(u) = 0")
 problem.add_equation("vz - dz(v) = 0")
 problem.add_equation("wz - dz(w) = 0")
@@ -97,13 +97,13 @@ problem.add_equation("  rho_ref*( dt(v) - (4/3)*dy(dy(v)) - dz(vz) - (1/3)*dy(wz
                         = -rho_ref*( v*dy(v) + w*vz )")
 
 # z-component of the momentum equation
-problem.add_equation("  rho_ref*T_ref*( dt(w) - X*s - dy(dy(w)) - (4/3)*dz(wz) - (1/3)*dy(vz) - T*u*cos(Lat) ) \
+problem.add_equation("  rho_ref*T_ref*( dt(w) - X*S - dy(dy(w)) - (4/3)*dz(wz) - (1/3)*dy(vz) - T*u*cos(Lat) ) \
                         + T_ref*dz(p) + theta*m*p + (2/3)*theta*m*rho_ref*( 2*wz - dy(v) ) \
                         = -rho_ref*T_ref*( v*dy(w) + w*wz )")
 
 # entropy diffusion equation
-problem.add_equation("  T_ref*( Pr*dt(s) - dy(dy(s)) - dz(sz) ) - Pr*w/rho_ref + theta*(m+1)*sz \
-                        = -Pr*T_ref*( v*dy(s) + w*sz ) \
+problem.add_equation("  T_ref*( Pr*dt(S) - dy(dy(S)) - dz(Sz) ) - Pr*w/rho_ref + theta*(m+1)*Sz \
+                        = -Pr*T_ref*( v*dy(S) + w*Sz ) \
                         + 2*Y*( dy(v)*dy(v) + wz*wz + vz*dy(w) - (1/3)*(dy(v) + wz)*(dy(v) + wz) + (1/2)*(dy(u)*dy(u) + uz*uz + vz*vz + dy(w)*dy(w)) )")
 
 # Flux equations for use in analysis outputs
@@ -117,8 +117,8 @@ problem.add_bc("left(uz) = 0")           # Stress-free bottom boundary
 problem.add_bc("right(uz) = 0")          # Stress-free top boundary
 problem.add_bc("left(vz) = 0")
 problem.add_bc("right(vz) = 0")
-problem.add_bc("right(s) = 0")           # Fixed entropy at upper boundary, arbitarily set to 0
-problem.add_bc("left(sz) = 0")          #Fixed flux at bottom boundary, F = F_cond
+problem.add_bc("right(S) = 0")           # Fixed entropy at upper boundary, arbitarily set to 0
+problem.add_bc("left(Sz) = 0")          #Fixed flux at bottom boundary, F = F_cond
 
 problem.add_bc("left(L_buoy) = 0")       # BC for L_buoy for partial depth integration
 problem.add_bc("left(L_diss) = 0")       # BC for L_diss for partial depth integration
@@ -132,9 +132,9 @@ logger.info('Solver built')
 # Initial conditions
 x = domain.grid(0)
 z = domain.grid(1)
-s = solver.state['s']
+S = solver.state['S']
 w = solver.state['w']
-sz = solver.state['sz']
+Sz = solver.state['Sz']
 
 # Random perturbations, initialized globally for same results in parallel
 gshape = domain.dist.grid_layout.global_shape(scales=1)
@@ -145,8 +145,10 @@ noise = rand.standard_normal(gshape)[slices]
 # Linear background + perturbations damped at walls
 zb, zt = z_basis.interval
 pert =  1e-5 * noise * (zt - z) * (z - zb)
-s['g'] = pert
-s.differentiate('z', out=sz)
+rho_ref.set_scales(1)
+Sb = 1/(theta*m) * ( (1-theta)**(-m) - 1/rho_ref['g'] )
+S['g'] = pert + Sb
+S.differentiate('z', out=Sz)
 
 # Initial timestep
 dt = rpf.initial_timestep
@@ -219,7 +221,7 @@ analysis.add_task("(integ(rho_ref*w*T_ref*s_total, 'y')*Pr + \
 #Magnitude of viscous dissipation as calculated by equation 5 (E_def) and equation 24 (E_F_conv) - See C&B '17
 analysis.add_task(" integ( integ( 2*rho_ref*( dy(v)*dy(v) + wz*wz + vz*dy(w) - (1/3)*(dy(v)+wz)*(dy(v)+wz) + (1/2)*(dy(u)*dy(u) + uz*uz + vz*vz + dy(w)*dy(w)) ) \
                                , 'y'), 'z')*(((Pr*Pr*theta)/Ra )/(Ly*Lz)) ", layout='g', name='E_def')
-analysis.add_task(" integ( (integ(rho_ref*T_ref*s*w,'y')/Ly)/T_ref, 'z')*Pr*theta/Lz ", layout='g', name='E_F_conv')
+analysis.add_task(" integ( (integ(rho_ref*T_ref*s_total*w,'y')/Ly)/T_ref, 'z')*Pr*theta/Lz ", layout='g', name='E_F_conv')
 
 #E_def as a function of the z direction
 analysis.add_task(" integ( 2*rho_ref*( dy(v)*dy(v) + wz*wz + vz*dy(w) - (1/3)*(dy(v)+wz)*(dy(v)+wz) + (1/2)*(dy(u)*dy(u) + uz*uz + vz*vz + dy(w)*dy(w)) ) \
