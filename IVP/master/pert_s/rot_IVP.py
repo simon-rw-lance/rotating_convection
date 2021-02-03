@@ -48,7 +48,7 @@ z = domain.grid(1, scales=1)                                   # accessing the z
 
 # 2D Anelastic hydrodynamics
 problem = de.IVP(domain, variables=['p', 'S', 'u', 'v', 'w', 'Sz', 'uz', 'vz', 'wz', 'L_buoy', 'L_diss'])
-problem.meta['p','s','u','w']['z']['dirichlet'] = True
+problem.meta['p','S','u','w']['z']['dirichlet'] = True
 
 # Defining model parameters
 problem.parameters['Ly'] = Ly
@@ -252,7 +252,7 @@ analysis.add_task(" integ( integ( rho_ref*( v*dy(v) + w*vz ), 'y')/Ly, 'z')/Lz",
 
 # z-momentum
 analysis.add_task(" integ( integ( rho_ref*w, 'y')/Ly, 'z')/Lz", layout='g', name='<z_mom>')
-analysis.add_task(" integ( integ( rho_ref*X*s, 'y')/Ly, 'z')/Lz",                                         layout='g', name='<z_mom>_buoy')
+analysis.add_task(" integ( integ( rho_ref*X*S, 'y')/Ly, 'z')/Lz",                                         layout='g', name='<z_mom>_buoy')
 analysis.add_task(" integ( integ( rho_ref*( dy(dy(w)) + (4/3)*dz(wz) + (1/3)*dy(vz) ), 'y')/Ly, 'z')/Lz", layout='g', name='<z_mom>_visc1')
 analysis.add_task(" integ( integ( rho_ref*T*u*cos(Lat), 'y')/Ly, 'z')/Lz",                                layout='g', name='<z_mom>_rot')
 analysis.add_task(" integ( integ( -dz(p), 'y')/Ly, 'z')/Lz",                                              layout='g', name='<z_mom>_gradP')
