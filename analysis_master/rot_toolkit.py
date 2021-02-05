@@ -36,7 +36,7 @@ class SimData:
         with h5py.File(f"{self.data_direc}snapshots/snapshots{self.id}.h5", mode='r') as file:
             self.snap_t = np.array(file['scales']['sim_time'])
             self.snap_length = len(self.snap_t)
-            self.z = file['scales']['z']['1.0']
+            self.z = np.array(file['scales']['z']['1.0'])
         with h5py.File(f"{self.data_direc}analysis/analysis{self.id}.h5", mode='r') as file:
             self.ana_t = np.array(file['scales']['sim_time'])
             self.ana_length = len(self.ana_t)
