@@ -7,6 +7,7 @@ import sys
 import pathlib
 import time
 import datetime
+import os
 from scipy import integrate
 from scipy.signal import savgol_filter
 
@@ -32,17 +33,45 @@ class SimData:
 
         print("Accessing simulation: {}".format(self.name))
 
+        self.snap_files = os.listdir(f"{self.data_direc}snapshots")
+        self.ana_files = os.listdir(f"{self.data_direc}analysis")
+        self.run_param_files = os.listdir(f"{self.data_direc}run_parameters")
+
         # Space and time arrays are used in a lot of methods and so loaded on initalisation
-        with h5py.File(f"{self.data_direc}snapshots/snapshots{self.id}.h5", mode='r') as file:
-            self.snap_t = np.array(file['scales']['sim_time'])
-            self.snap_length = len(self.snap_t)
-            self.z = np.array(file['scales']['z']['1.0'])
-        with h5py.File(f"{self.data_direc}analysis/analysis{self.id}.h5", mode='r') as file:
-            self.ana_t = np.array(file['scales']['sim_time'])
-            self.ana_length = len(self.ana_t)
+        if len(self.snap_files) == 1:
+            with h5py.File(f"{self.data_direc}snapshots/{self.snap_files[0]}", mode='r') as file:
+                self.snap_t = np.array(file['scales']['sim_time'])
+                self.snap_length = len(self.snap_t)
+                self.z = np.array(file['scales']['z']['1.0'])
+        else:
+            for i in range(len(self.snap_files)):
+                if i == 0:
+                    with h5py.File(f"{self.data_direc}snapshots/snapshots_s{i+1}.h5", mode='r') as file:
+                        self.snap_t = np.array(file['scales']['sim_time'])
+                        self.snap_length = len(self.snap_t)
+                        self.z = np.array(file['scales']['z']['1.0'])
+                else:
+                    with h5py.File(f"{self.data_direc}snapshots/snapshots_s{i+1}.h5", mode='r') as file:
+                        self.snap_t = np.concatenate((self.snap_t, np.array(file['scales']['sim_time'])), axis=0)
+
+        # Same done for analysis time array
+        if len(self.ana_files) == 1:
+            with h5py.File(f"{self.data_direc}analysis/{self.ana_files[0]}", mode='r') as file:
+                self.ana_t = np.array(file['scales']['sim_time'])
+                self.ana_length = len(self.ana_t)
+        else:
+            for i in range(len(self.ana_files)):
+                if i == 0:
+                    with h5py.File(f"{self.data_direc}analysis/analysis_s{i+1}.h5", mode='r') as file:
+                        self.ana_t = np.array(file['scales']['sim_time'])
+                else:
+                    with h5py.File(f"{self.data_direc}analysis/analysis_s{i+1}.h5", mode='r') as file:
+                        self.ana_t = np.concatenate((self.ana_t, np.array(file['scales']['sim_time'])), axis=0)
 
         # Read in run_parameters file and store them in a dictionary called 'params'
-        with h5py.File(f"{data_direc}run_parameters/run_parameters{self.id}.h5", mode='r') as file:
+        if len(self.run_param_files) > 1:
+            print("WARNING: More than one file found in raw_data/run_parameters/")
+        with h5py.File(f"{data_direc}run_parameters/{self.run_param_files[0]}", mode='r') as file:
             vars = list(file['tasks'])
             params = {}
             for var in vars:
@@ -56,6 +85,10 @@ class SimData:
                 elif vs[0] != 1:
                     params[var] = file['tasks'][var][:,0,0]
         self.params = params
+
+        print(f"Snapshot output range: {self.snap_t[0]:.3f} to {self.snap_t[-1]:.3f}")
+        print(f"Analysis output range: {self.ana_t[0]:.3f} to {self.ana_t[-1]:.3f}")
+
 
     ##################################
     ##### Data Reading Functions #####
@@ -82,24 +115,49 @@ class SimData:
         Function that reads in all variable stored in the 'snapshots' .h5 file
         and stores them in two dictionaries, snap_scales and snap_tasks
         '''
-        print("### Loading Snapshot Data... ###")
+        print("### Loading snapshot data... ###")
 
         self.snap_scales = {}
         self.snap_tasks = {}
 
-        with h5py.File(f"{self.data_direc}snapshots/snapshots{self.id}.h5", mode='r') as file:
-            scales = list(file['scales'])
-            tasks = list(file['tasks'])
-            for var in scales:
-                if var not in ('x', 'y', 'z'):
-                    self.snap_scales[var] = np.array(file['scales'][var])
-                else:
-                    if len(list(file['scales'][var])):
-                        self.snap_scales[var] = np.array(file['scales'][var]['1.0'])
-                    elif var in ('x', 'y'): # If no horizontal domain found, assume constant grid spacing
-                        self.ana_scales[var] = np.linspace(0, self.params[f'L{var}'], int(self.params[f'N{var}']))
-            for var in tasks:
-                self.snap_tasks[var] = np.array(file['tasks'][var])
+        for i in range(len(self.snap_files)):
+            print(f"Accessing snapshots_s{i+1}.h5")
+            if i == 0:
+                with h5py.File(f"{self.data_direc}snapshots/{self.snap_files[0]}", mode='r') as file:
+                    scales = list(file['scales'])
+                    tasks = list(file['tasks'])
+                    for var in scales:
+                        if var not in ('x', 'y', 'z'):
+                            self.snap_scales[var] = np.array(file['scales'][var])
+                        else:
+                            if len(list(file['scales'][var])):
+                                self.snap_scales[var] = np.array(file['scales'][var]['1.0'])
+                            elif var in ('x', 'y'): # If no horizontal domain found, assume constant grid spacing
+                                self.ana_scales[var] = np.linspace(0, self.params[f'L{var}'], int(self.params[f'N{var}']))
+                    for var in tasks:
+                        self.snap_tasks[var] = np.array(file['tasks'][var])
+            else:
+                with h5py.File(f"{self.data_direc}snapshots/snapshots_s{i+1}.h5", mode='r') as file:
+                    for var in scales:
+                        if var in ('iteration', 'sim_time', 'timestep', 'wall_time', 'world_time', 'write_number'):
+                            self.snap_scales[var] = np.concatenate((self.snap_scales[var], np.array(file['scales'][var])), axis=0)
+                    for var in tasks:
+                        self.snap_tasks[var] = np.concatenate((self.snap_tasks[var], np.array(file['tasks'][var])), axis=0)
+
+
+        # with h5py.File(f"{self.data_direc}snapshots/snapshots{self.id}.h5", mode='r') as file:
+        #     scales = list(file['scales'])
+        #     tasks = list(file['tasks'])
+        #     for var in scales:
+        #         if var not in ('x', 'y', 'z'):
+        #             self.snap_scales[var] = np.array(file['scales'][var])
+        #         else:
+        #             if len(list(file['scales'][var])):
+        #                 self.snap_scales[var] = np.array(file['scales'][var]['1.0'])
+        #             elif var in ('x', 'y'): # If no horizontal domain found, assume constant grid spacing
+        #                 self.ana_scales[var] = np.linspace(0, self.params[f'L{var}'], int(self.params[f'N{var}']))
+        #     for var in tasks:
+        #         self.snap_tasks[var] = np.array(file['tasks'][var])
 
         theta = 1-np.exp(-self.params['Np']/self.params['m'])
         rho_ref = (1-theta*self.z)**(self.params['m'])
@@ -118,7 +176,7 @@ class SimData:
         self.snapshot_data_read = True
 
 
-        print("### Snapshots Loaded ###")
+        print("### Snapshot outputs loaded ###")
 
     def ReadAnalysis(self):
         '''
@@ -126,25 +184,39 @@ class SimData:
         and stores them in two dictionaries, ana_scales and ana_tasks
         '''
 
+        print("### Loading analysis outputs... ###")
+
         self.ana_scales = {}
         self.ana_tasks = {}
 
-        with h5py.File(f"{self.data_direc}analysis/analysis{self.id}.h5", mode='r') as file:
-            scales = list(file['scales'])
-            tasks = list(file['tasks'])
-            for var in scales:
-                if var not in ('x', 'y', 'z'):
-                    self.ana_scales[var] = np.array(file['scales'][var])
-                else:
-                    if len(list(file['scales'][var])):
-                        self.ana_scales[var] = np.array(file['scales'][var]['1.0'])
-                    elif var in ('x', 'y'): # If no horizontal domain found, assume constant grid spacing
-                        self.ana_scales[var] = np.linspace(0, self.params[f'L{var}'], int(self.params[f'N{var}']))
-            for var in tasks:
-                self.ana_tasks[var] = np.array(file['tasks'][var])
+        for i in range(len(self.ana_files)):
+            print(f"Accessing analysis_s{i+1}.h5")
+            if i == 0:
+                with h5py.File(f"{self.data_direc}analysis/{self.ana_files[0]}", mode='r') as file:
+                    scales = list(file['scales'])
+                    tasks = list(file['tasks'])
+                    for var in scales:
+                        if var not in ('x', 'y', 'z'):
+                            self.ana_scales[var] = np.array(file['scales'][var])
+                        else:
+                            if len(list(file['scales'][var])):
+                                self.ana_scales[var] = np.array(file['scales'][var]['1.0'])
+                            elif var in ('x', 'y'): # If no horizontal domain found, assume constant grid spacing
+                                self.ana_scales[var] = np.linspace(0, self.params[f'L{var}'], int(self.params[f'N{var}']))
+                    for var in tasks:
+                        self.ana_tasks[var] = np.array(file['tasks'][var])
+            else:
+                with h5py.File(f"{self.data_direc}analysis/analysis_s{i+1}.h5", mode='r') as file:
+                    for var in scales:
+                        if var in ('iteration', 'sim_time', 'timestep', 'wall_time', 'world_time', 'write_number'):
+                            self.ana_scales[var] = np.concatenate((self.ana_scales[var], np.array(file['scales'][var])), axis=0)
+                    for var in tasks:
+                        self.ana_tasks[var] = np.concatenate((self.ana_tasks[var], np.array(file['tasks'][var])), axis=0)
 
         self.ana_t = self.ana_scales['sim_time']
         self.analysis_data_read = True
+
+        print("### Analysis outputs loaded ###")
 
     ##################################
     ######### Calculus Tools #########
