@@ -684,8 +684,7 @@ class SimData:
 
         print("### Plotting E ###")
 
-        with h5py.File(f"{self.data_direc}analysis/analysis{self.id}.h5", mode='r') as file:
-            self.E_all = np.array(file['tasks']['E_def'])[:,0,0]
+        self.E_all = self.ana_tasks['E_def'][:,0,0]
 
         self.mean_E = np.mean(self.E_all[self.ASI:self.AEI], axis=0)
 
